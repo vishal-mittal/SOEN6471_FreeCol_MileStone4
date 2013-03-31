@@ -1,0 +1,6 @@
+This is makeindex, version 2.14 [02-Oct-2002] (kpathsea + Thai support).
+Scanning input file /home/mpope/tmp/0.10.7/doc/FreeCol.idx....done (427 entries accepted, 0 rejected).
+Sorting entries......done (4080 comparisons).
+Generating output file /home/mpope/tmp/0.10.7/doc/FreeCol.ind....done (501 lines written, 0 warnings).
+Output written in /home/mpope/tmp/0.10.7/doc/FreeCol.ind.
+Transcript written in /home/mpope/tmp/0.10.7/doc/FreeCol.ilg.

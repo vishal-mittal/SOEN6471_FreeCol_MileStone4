@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.8.3
+Created-By: FreeCol Team
+Main-Class: net.sf.freecol.FreeCol
+Product-Name: FreeCol
+Package-Title: FreeCol
+Package-Version: 10450
+Package-Vendor: FreeCol Team
+Class-Path: jars/jsr173_1.0_api.jar jars/wstx-lgpl-4.0pr1.jar jars/jog
+ g-0.0.7.jar jars/jorbis-0.0.15.jar jars/tritonus_share.jar jars/vorbi
+ sspi1.0.3.jar jars/miglayout-4.0-swing.jar jars/commons-cli-1.1.jar j
+ ars/cortado-0.6.0.jar
+
