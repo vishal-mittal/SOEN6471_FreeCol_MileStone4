@@ -83,9 +83,9 @@ public class ChangeSet {
         }
     }
 
-    private ArrayList<Change> changes;
+    private ChangeSetData data = new ChangeSetData();
 
-    private static Comparator<Change> changeComparator
+	private static Comparator<Change> changeComparator
         = new Comparator<Change>() {
         public int compare(final Change c1, final Change c2) {
             return c1.getPriority() - c2.getPriority();
@@ -203,7 +203,7 @@ public class ChangeSet {
     }
 
     // Abstract template for all types of Change.
-    private abstract static class Change {
+    public abstract static class Change {
 
         /**
          * The visibility of the change.
@@ -1163,7 +1163,7 @@ public class ChangeSet {
      * Simple constructor.
      */
     public ChangeSet() {
-        changes = new ArrayList<Change>();
+        data.setChanges(new ArrayList<Change>());
     }
 
     /**
@@ -1172,7 +1172,7 @@ public class ChangeSet {
      * @param other The other <code>ChangeSet</code> to copy.
      */
     public ChangeSet(ChangeSet other) {
-        changes = new ArrayList<Change>(other.changes);
+        data.setChanges(new ArrayList<Change>(other.data.getChanges()));
     }
 
 
@@ -1187,7 +1187,7 @@ public class ChangeSet {
      */
     public ChangeSet add(See see, FreeColGameObject... objects) {
         for (FreeColGameObject o : objects) {
-            changes.add(new ObjectChange(see, o));
+            data.getChanges().add(new ObjectChange(see, o));
         }
         return this;
     }
@@ -1201,7 +1201,7 @@ public class ChangeSet {
      */
     public ChangeSet add(See see, List<FreeColGameObject> objects) {
         for (FreeColGameObject o : objects) {
-            changes.add(new ObjectChange(see, o));
+            data.getChanges().add(new ObjectChange(see, o));
         }
         return this;
     }
@@ -1215,7 +1215,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet add(See see, ChangePriority cp, DOMMessage message) {
-        changes.add(new MessageChange(see, cp, message));
+        data.getChanges().add(new MessageChange(see, cp, message));
         return this;
     }
 
@@ -1233,7 +1233,7 @@ public class ChangeSet {
     public ChangeSet addAttack(See see, Unit attacker, Unit defender,
                                Tile attackerTile, Tile defenderTile,
                                boolean success) {
-        changes.add(new AttackChange(see, attacker, defender,
+        data.getChanges().add(new AttackChange(see, attacker, defender,
                                      attackerTile, defenderTile, success));
         return this;
     }
@@ -1247,7 +1247,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addAttribute(See see, String key, String value) {
-        changes.add(new AttributeChange(see, key, value));
+        data.getChanges().add(new AttributeChange(see, key, value));
         return this;
     }
 
@@ -1273,7 +1273,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addDispose(See see, Location loc, FreeColGameObject obj) {
-        changes.add(new RemoveChange(see, loc, obj.disposeList()));
+        data.getChanges().add(new RemoveChange(see, loc, obj.disposeList()));
         return this;
     }
 
@@ -1290,8 +1290,8 @@ public class ChangeSet {
                                   FreeColGameObject fcgo) {
         List<FreeColGameObject> objects = new ArrayList<FreeColGameObject>();
         objects.add(fcgo);
-        changes.add(new RemoveChange(See.perhaps().except(owner), tile, objects));
-        changes.add(new ObjectChange(See.perhaps().except(owner), tile));
+        data.getChanges().add(new RemoveChange(See.perhaps().except(owner), tile, objects));
+        data.getChanges().add(new ObjectChange(See.perhaps().except(owner), tile));
         return this;
     }
 
@@ -1305,7 +1305,7 @@ public class ChangeSet {
      */
     public ChangeSet addFather(ServerPlayer serverPlayer,
                                FoundingFather father) {
-        changes.add(new OwnedChange(See.only(serverPlayer), father));
+        data.getChanges().add(new OwnedChange(See.only(serverPlayer), father));
         serverPlayer.addFather(father);
         return this;
     }
@@ -1321,7 +1321,7 @@ public class ChangeSet {
      */
     public ChangeSet addFeatureChange(ServerPlayer serverPlayer, FreeColGameObject object,
                                       Ability ability, boolean add) {
-        changes.add(new FeatureChange(See.only(serverPlayer), object, ability, add));
+        data.getChanges().add(new FeatureChange(See.only(serverPlayer), object, ability, add));
         if (add) {
             object.addAbility(ability);
         } else {
@@ -1341,7 +1341,7 @@ public class ChangeSet {
      */
     public ChangeSet addFeatureChange(ServerPlayer serverPlayer, FreeColGameObject object,
                                       Modifier modifier, boolean add) {
-        changes.add(new FeatureChange(See.only(serverPlayer), object, modifier, add));
+        data.getChanges().add(new FeatureChange(See.only(serverPlayer), object, modifier, add));
         if (add) {
             object.addModifier(modifier);
         } else {
@@ -1359,7 +1359,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addGlobalHistory(Game game, HistoryEvent history) {
-        changes.add(new OwnedChange(See.all(), history));
+        data.getChanges().add(new OwnedChange(See.all(), history));
         for (Player p : game.getLiveEuropeanPlayers()) {
             p.addHistory(history);
         }
@@ -1376,7 +1376,7 @@ public class ChangeSet {
      */
     public ChangeSet addHistory(ServerPlayer serverPlayer,
                                 HistoryEvent history) {
-        changes.add(new OwnedChange(See.only(serverPlayer), history));
+        data.getChanges().add(new OwnedChange(See.only(serverPlayer), history));
         serverPlayer.addHistory(history);
         return this;
     }
@@ -1389,7 +1389,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addMessage(See see, ModelMessage message) {
-        changes.add(new OwnedChange(see, message));
+        data.getChanges().add(new OwnedChange(see, message));
         return this;
     }
 
@@ -1403,7 +1403,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addMove(See see, Unit unit, Location loc, Tile tile) {
-        changes.add(new MoveChange(see, unit, loc, tile));
+        data.getChanges().add(new MoveChange(see, unit, loc, tile));
         return this;
     }
 
@@ -1418,7 +1418,7 @@ public class ChangeSet {
      */
     public ChangeSet addPartial(See see, FreeColGameObject fcgo,
                                 String... fields) {
-        changes.add(new PartialObjectChange(see, fcgo, fields));
+        data.getChanges().add(new PartialObjectChange(see, fcgo, fields));
         return this;
     }
 
@@ -1435,7 +1435,7 @@ public class ChangeSet {
                                String name) {
         Game game = serverPlayer.getGame();
         HistoryEvent h = region.discover(serverPlayer, game.getTurn(), name);
-        changes.add(new ObjectChange(See.all(), region));
+        data.getChanges().add(new ObjectChange(See.all(), region));
         addGlobalHistory(game, h);
         return this;
     }
@@ -1453,7 +1453,7 @@ public class ChangeSet {
                              GoodsType type, int price) {
         Game game = settlement.getGame();
         LastSale sale = new LastSale(settlement, type, game.getTurn(), price);
-        changes.add(new OwnedChange(See.only(serverPlayer), sale));
+        data.getChanges().add(new OwnedChange(See.only(serverPlayer), sale));
         serverPlayer.saveSale(sale);
         return this;
     }
@@ -1471,7 +1471,7 @@ public class ChangeSet {
         List<FreeColGameObject> fcgos = new ArrayList<FreeColGameObject>();
         for (FreeColGameObject fcgo : objects) {
             fcgos.clear(); fcgos.add(fcgo);
-            changes.add(new RemoveChange(see, loc, fcgos));
+            data.getChanges().add(new RemoveChange(see, loc, fcgos));
         }
         return this;
     }
@@ -1484,7 +1484,7 @@ public class ChangeSet {
      * @return The updated <code>ChangeSet</code>.
      */
     public ChangeSet addSpy(See see, Settlement settlement) {
-        changes.add(new SpyChange(see, settlement));
+        data.getChanges().add(new SpyChange(see, settlement));
         return this;
     }
 
@@ -1499,7 +1499,7 @@ public class ChangeSet {
      */
     public ChangeSet addStance(See see, Player first, Stance stance,
                                Player second) {
-        changes.add(new StanceChange(see, first, stance, second));
+        data.getChanges().add(new StanceChange(see, first, stance, second));
         return this;
     }
 
@@ -1513,7 +1513,7 @@ public class ChangeSet {
      */
     public ChangeSet addTradeRoute(ServerPlayer serverPlayer,
                                    TradeRoute tradeRoute) {
-        changes.add(new OwnedChange(See.only(serverPlayer), tradeRoute));
+        data.getChanges().add(new OwnedChange(See.only(serverPlayer), tradeRoute));
         serverPlayer.getTradeRoutes().add(tradeRoute);
         return this;
     }
@@ -1529,7 +1529,7 @@ public class ChangeSet {
      */
     public ChangeSet addTrivial(See see, String name, ChangePriority cp,
                                 String... attributes) {
-        changes.add(new TrivialChange(see, name, cp.getPriority(), attributes));
+        data.getChanges().add(new TrivialChange(see, name, cp.getPriority(), attributes));
         return this;
     }
 
@@ -1610,7 +1610,7 @@ public class ChangeSet {
      *         consider, or null if there is nothing to report.
      */
     public Element build(ServerPlayer serverPlayer) {
-        List<Change> c = new ArrayList<Change>(changes);
+        List<Change> c = new ArrayList<Change>(data.getChanges());
         List<Element> elements = new ArrayList<Element>();
         List<Change> diverted = new ArrayList<Change>();
         Document doc = DOMMessage.createNewDocument();
@@ -1660,8 +1660,8 @@ public class ChangeSet {
      */
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        Collections.sort(changes, changeComparator);
-        for (Change c : changes) {
+        Collections.sort(data.getChanges(), changeComparator);
+        for (Change c : data.getChanges()) {
             sb.append(c.toString());
             sb.append("\n");
         }
