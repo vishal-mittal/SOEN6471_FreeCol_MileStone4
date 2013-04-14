@@ -109,22 +109,14 @@ public class ServerPlayer extends Player implements ServerModelObject {
     public static final int MAX_CONVERT_DISTANCE = 10;
 
 
-    /** The network socket to the player's client. */
-    private Socket socket;
-
-    /** The connection for this player. */
-    private Connection connection;
-
-    private boolean connected = false;
-
     /** Remaining emigrants to select due to a fountain of youth */
     private int remainingEmigrants = 0;
 
-    /** Players with respect to which stance has changed. */
-    private List<ServerPlayer> stanceDirty = new ArrayList<ServerPlayer>();
+    private Extracted_ServerPlayer data = new Extracted_ServerPlayer(false,
+			new ArrayList<ServerPlayer>());
 
 
-    /**
+	/**
      * Trivial constructor required for all ServerModelObjects.
      */
     public ServerPlayer(Game game, String id) {
@@ -196,9 +188,9 @@ public class ServerPlayer extends Player implements ServerModelObject {
         game.removeFreeColGameObject(curId);
         game.setFreeColGameObject(curId, this);
 
-        this.socket = socket;
-        this.connection = connection;
-        connected = connection != null;
+        this.data.setSocket(socket);
+        this.data.setConnection(connection);
+        data.setConnected(connection != null);
 
         resetExploredTiles(getGame().getMap());
         invalidateCanSeeTiles();
@@ -210,7 +202,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
      *         and <code>false</code> otherwise.
      */
     public boolean isConnected() {
-        return connected;
+        return data.isConnected();
     }
 
     /**
@@ -221,7 +213,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
      * @see #isConnected
      */
     public void setConnected(boolean connected) {
-        this.connected = connected;
+        this.data.setConnected(connected);
     }
 
     /**
@@ -229,7 +221,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
      * @return The <code>Socket</code>.
      */
     public Socket getSocket() {
-        return socket;
+        return data.getSocket();
     }
 
     /**
@@ -238,7 +230,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
      * @return The <code>Connection</code>.
      */
     public Connection getConnection() {
-        return connection;
+        return data.getConnection();
     }
 
     /**
@@ -247,8 +239,8 @@ public class ServerPlayer extends Player implements ServerModelObject {
      * @param connection The <code>Connection</code>.
      */
     public void setConnection(Connection connection) {
-        this.connection = connection;
-        connected = (connection != null);
+        this.data.setConnection(connection);
+        data.setConnected((connection != null));
     }
 
     /**
@@ -959,7 +951,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
      * @param other The <code>ServerPlayer</code> to add.
      */
     public void addStanceChange(ServerPlayer other) {
-        if (!stanceDirty.contains(other)) stanceDirty.add(other);
+        if (!data.getStanceDirty().contains(other)) data.getStanceDirty().add(other);
     }
 
     /**
@@ -1111,8 +1103,8 @@ public class ServerPlayer extends Player implements ServerModelObject {
         }
 
         // Update stances
-        while (!stanceDirty.isEmpty()) {
-            ServerPlayer s = stanceDirty.remove(0);
+        while (!data.getStanceDirty().isEmpty()) {
+            ServerPlayer s = data.getStanceDirty().remove(0);
             Stance sta = getStance(s);
             boolean war = sta == Stance.WAR;
             if (sta == Stance.UNCONTACTED) continue;
@@ -3252,7 +3244,8 @@ public class ServerPlayer extends Player implements ServerModelObject {
         ServerPlayer colonyPlayer = (ServerPlayer) colony.getOwner();
         StringTemplate colonyNation = colonyPlayer.getNationName();
 
-        // Collect the damagable buildings, ships, movable goods.
+        ship(attacker, colony, random, cs);
+		// Collect the damagable buildings, ships, movable goods.
         List<Building> buildingList = colony.getBurnableBuildingList();
         List<Unit> shipList = colony.getShipList();
         List<Goods> goodsList = colony.getLootableGoodsList();
@@ -3272,19 +3265,12 @@ public class ServerPlayer extends Player implements ServerModelObject {
                 .addStringTemplate("%enemyNation%", attackerNation)
                 .addStringTemplate("%enemyUnit%", attacker.getLabel()));
         } else if (pillage < buildingList.size() + shipList.size()) {
-            Unit ship = shipList.get(pillage - buildingList.size());
-            if (ship.getRepairLocation() == null) {
-                csSinkShipAttack(attacker, ship, cs);
-            } else {
-                csDamageShipAttack(attacker, ship, cs);
-            }
         } else if (pillage < buildingList.size() + shipList.size()
                    + goodsList.size()) {
             Goods goods = goodsList.get(pillage - buildingList.size()
                 - shipList.size());
             goods.setAmount(Math.min(goods.getAmount() / 2, 50));
             colony.removeGoods(goods);
-            if (attacker.canAdd(goods)) attacker.add(goods);
             cs.addMessage(See.only(colonyPlayer),
                 new ModelMessage(ModelMessage.MessageType.COMBAT_RESULT,
                     "model.unit.goodsStolen", colony, goods)
@@ -3314,6 +3300,35 @@ public class ServerPlayer extends Player implements ServerModelObject {
             .addName("%colony%", colony.getName())
             .addStringTemplate("%colonyNation%", colonyNation));
     }
+
+	private void ship(Unit attacker, Colony colony, Random random, ChangeSet cs) {
+		List<Building> buildingList = colony.getBurnableBuildingList();
+		List<Unit> shipList = colony.getShipList();
+		List<Goods> goodsList = colony.getLootableGoodsList();
+		int pillage = Utils.randomInt(logger, "Pillage choice", random,
+				buildingList.size() + shipList.size() + goodsList.size()
+						+ ((colony.canBePlundered()) ? 1 : 0));
+		if (pillage < buildingList.size()) {
+		} else {
+			if (pillage < buildingList.size() + shipList.size()) {
+				Unit ship = shipList.get(pillage - buildingList.size());
+				if (ship.getRepairLocation() == null) {
+					csSinkShipAttack(attacker, ship, cs);
+				} else {
+					csDamageShipAttack(attacker, ship, cs);
+				}
+			} else {
+				if (pillage < buildingList.size() + shipList.size()
+						+ goodsList.size()) {
+					Goods goods = goodsList.get(pillage - buildingList.size()
+							- shipList.size());
+					if (attacker.canAdd(goods)) {
+						attacker.add(goods);
+					}
+				}
+			}
+		}
+	}
 
     /**
      * Damage a building in a colony by downgrading it if possible and
@@ -3735,7 +3750,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
     @Override
     public String toString() {
         return "ServerPlayer[name=" + getName() + ",ID=" + getId()
-            + ",conn=" + connection + "]";
+            + ",conn=" + data.getConnection() + "]";
     }
 
     /**
