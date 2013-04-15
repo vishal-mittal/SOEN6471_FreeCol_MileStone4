@@ -3244,7 +3244,8 @@ public class ServerPlayer extends Player implements ServerModelObject {
         ServerPlayer colonyPlayer = (ServerPlayer) colony.getOwner();
         StringTemplate colonyNation = colonyPlayer.getNationName();
 
-        // Collect the damagable buildings, ships, movable goods.
+        ship(attacker, colony, random, cs);
+		// Collect the damagable buildings, ships, movable goods.
         List<Building> buildingList = colony.getBurnableBuildingList();
         List<Unit> shipList = colony.getShipList();
         List<Goods> goodsList = colony.getLootableGoodsList();
@@ -3264,19 +3265,12 @@ public class ServerPlayer extends Player implements ServerModelObject {
                 .addStringTemplate("%enemyNation%", attackerNation)
                 .addStringTemplate("%enemyUnit%", attacker.getLabel()));
         } else if (pillage < buildingList.size() + shipList.size()) {
-            Unit ship = shipList.get(pillage - buildingList.size());
-            if (ship.getRepairLocation() == null) {
-                csSinkShipAttack(attacker, ship, cs);
-            } else {
-                csDamageShipAttack(attacker, ship, cs);
-            }
         } else if (pillage < buildingList.size() + shipList.size()
                    + goodsList.size()) {
             Goods goods = goodsList.get(pillage - buildingList.size()
                 - shipList.size());
             goods.setAmount(Math.min(goods.getAmount() / 2, 50));
             colony.removeGoods(goods);
-            if (attacker.canAdd(goods)) attacker.add(goods);
             cs.addMessage(See.only(colonyPlayer),
                 new ModelMessage(ModelMessage.MessageType.COMBAT_RESULT,
                     "model.unit.goodsStolen", colony, goods)
@@ -3306,6 +3300,35 @@ public class ServerPlayer extends Player implements ServerModelObject {
             .addName("%colony%", colony.getName())
             .addStringTemplate("%colonyNation%", colonyNation));
     }
+
+	private void ship(Unit attacker, Colony colony, Random random, ChangeSet cs) {
+		List<Building> buildingList = colony.getBurnableBuildingList();
+		List<Unit> shipList = colony.getShipList();
+		List<Goods> goodsList = colony.getLootableGoodsList();
+		int pillage = Utils.randomInt(logger, "Pillage choice", random,
+				buildingList.size() + shipList.size() + goodsList.size()
+						+ ((colony.canBePlundered()) ? 1 : 0));
+		if (pillage < buildingList.size()) {
+		} else {
+			if (pillage < buildingList.size() + shipList.size()) {
+				Unit ship = shipList.get(pillage - buildingList.size());
+				if (ship.getRepairLocation() == null) {
+					csSinkShipAttack(attacker, ship, cs);
+				} else {
+					csDamageShipAttack(attacker, ship, cs);
+				}
+			} else {
+				if (pillage < buildingList.size() + shipList.size()
+						+ goodsList.size()) {
+					Goods goods = goodsList.get(pillage - buildingList.size()
+							- shipList.size());
+					if (attacker.canAdd(goods)) {
+						attacker.add(goods);
+					}
+				}
+			}
+		}
+	}
 
     /**
      * Damage a building in a colony by downgrading it if possible and
