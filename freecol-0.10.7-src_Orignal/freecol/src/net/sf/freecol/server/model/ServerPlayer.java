@@ -103,7 +103,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
     // checkForDeath results
     public static final int IS_DEAD = -1;
     public static final int IS_ALIVE = 0;
-    public static final int AUTORECRUIT = 1;
+    public static final int AUTORECRUIT = 1;														
 
     // How far to search for a colony to add an Indian convert to.
     public static final int MAX_CONVERT_DISTANCE = 10;
@@ -112,8 +112,7 @@ public class ServerPlayer extends Player implements ServerModelObject {
     /** Remaining emigrants to select due to a fountain of youth */
     private int remainingEmigrants = 0;
 
-    private Extracted_ServerPlayer data = new Extracted_ServerPlayer(false,
-			new ArrayList<ServerPlayer>());
+    private ServerConnection data = new ServerConnection(false, new ArrayList<ServerPlayer>());
 
 
 	/**

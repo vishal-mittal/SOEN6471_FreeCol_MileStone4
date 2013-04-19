@@ -2080,7 +2080,7 @@ public final class InGameController extends Controller {
         cs.add(See.only(serverPlayer),
             ((ServerIndianSettlement)settlement).modifyAlarm(serverPlayer,
                 Tension.TENSION_ADD_NORMAL));
-        ModelMessage m = m(unit, settlement, gold, year);
+        ModelMessage m = settleAgreement(unit, settlement, gold, year);
 		if (gold > 0) {
             indianPlayer.modifyGold(-gold);
             serverPlayer.modifyGold(gold);
@@ -2097,8 +2097,8 @@ public final class InGameController extends Controller {
         return cs.build(serverPlayer);
     }
 
-	private ModelMessage m(Unit unit, IndianSettlement settlement, int gold,
-			int year) {
+	private ModelMessage settleAgreement(Unit unit,
+			IndianSettlement settlement, int gold, int year) {
 		settlement.setLastTribute(year);
 		ModelMessage m;
 		if (gold > 0) {
