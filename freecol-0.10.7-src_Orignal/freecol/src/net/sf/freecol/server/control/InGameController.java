@@ -2080,31 +2080,38 @@ public final class InGameController extends Controller {
         cs.add(See.only(serverPlayer),
             ((ServerIndianSettlement)settlement).modifyAlarm(serverPlayer,
                 Tension.TENSION_ADD_NORMAL));
-        settlement.setLastTribute(year);
-        ModelMessage m;
-        if (gold > 0) {
+        ModelMessage m = settleAgreement(unit, settlement, gold, year);
+		if (gold > 0) {
             indianPlayer.modifyGold(-gold);
             serverPlayer.modifyGold(gold);
             cs.addPartial(See.only(serverPlayer), serverPlayer, "gold", "score");
-            m = new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
-                                 "scoutSettlement.tributeAgree",
-                                 unit, settlement)
-                .addAmount("%amount%", gold);
         } else {
-            m = new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
-                                 "scoutSettlement.tributeDisagree",
-                                 unit, settlement);
         }
         cs.addMessage(See.only(serverPlayer), m);
         Tile tile = settlement.getTile();
         tile.updatePlayerExploredTile(serverPlayer, true);
         cs.add(See.only(serverPlayer), tile);
-        unit.setMovesLeft(0);
         cs.addPartial(See.only(serverPlayer), unit, "movesLeft");
 
         // Do not update others, this is all private.
         return cs.build(serverPlayer);
     }
+
+	private ModelMessage settleAgreement(Unit unit,
+			IndianSettlement settlement, int gold, int year) {
+		settlement.setLastTribute(year);
+		ModelMessage m;
+		if (gold > 0) {
+			m = new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
+					"scoutSettlement.tributeAgree", unit, settlement)
+					.addAmount("%amount%", gold);
+		} else {
+			m = new ModelMessage(ModelMessage.MessageType.FOREIGN_DIPLOMACY,
+					"scoutSettlement.tributeDisagree", unit, settlement);
+		}
+		unit.setMovesLeft(0);
+		return m;
+	}
 
 
     /**
